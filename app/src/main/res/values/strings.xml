@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Pocket Library</string>
+    <string name="take_picture_button_title">Take picture</string>
+    <string name="open_gallery_button_title">Open from gallery</string>
+</resources>
