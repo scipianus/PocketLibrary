@@ -4,12 +4,11 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -17,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -27,10 +25,14 @@ import java.util.Locale;
 public class IntroActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
     private static final int REQUEST_TAKE_PHOTO = 2;
-    private static final int PERMISSIONS_REQUEST = 1;
+    private static final int GALLERY_PERMISSION_REQUEST = 1;
+    private static final int CAMERA_PERMISSIONS_REQUEST = 2;
     private static final String IMAGE_EXTRA = "picture";
-    private Bitmap mImageBitmap;
     private String mCurrentPhotoPath;
+
+    static {
+        System.loadLibrary("opencv_java3");
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,14 +42,19 @@ public class IntroActivity extends AppCompatActivity {
 
     protected void launchViewPictureActivity() {
         Intent intent = new Intent(this, ViewPictureActivity.class);
-        intent.putExtra(IMAGE_EXTRA, getByteArrayImage());
+        intent.putExtra(IMAGE_EXTRA, mCurrentPhotoPath);
         startActivity(intent);
     }
 
     public void loadFromGallery(View view) {
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
-                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    GALLERY_PERMISSION_REQUEST);
+        } else {
+            openGallery();
+        }
     }
 
     public void openCameraRequest(View view) {
@@ -58,10 +65,16 @@ public class IntroActivity extends AppCompatActivity {
 
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    PERMISSIONS_REQUEST);
+                    CAMERA_PERMISSIONS_REQUEST);
         } else {
             takePicture();
         }
+    }
+
+    protected void openGallery() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
     }
 
     protected void takePicture() {
@@ -94,16 +107,18 @@ public class IntroActivity extends AppCompatActivity {
 
                 Cursor cursor = getContentResolver().query(selectedImage,
                         filePathColumn, null, null, null);
-                cursor.moveToFirst();
+                if (cursor != null) {
+                    cursor.moveToFirst();
 
-                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                String imgPath = cursor.getString(columnIndex);
-                cursor.close();
+                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                    mCurrentPhotoPath = cursor.getString(columnIndex);
+                    cursor.close();
 
-                mImageBitmap = BitmapFactory.decodeFile(imgPath);
-                launchViewPictureActivity();
+                    launchViewPictureActivity();
+                } else {
+                    Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
+                }
             } else if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK && data != null) {
-                mImageBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
                 launchViewPictureActivity();
             } else {
                 Toast.makeText(this, "You haven't picked any image", Toast.LENGTH_LONG).show();
@@ -115,10 +130,18 @@ public class IntroActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
-            case PERMISSIONS_REQUEST: {
-                if (grantResults.length >= 2
+            case GALLERY_PERMISSION_REQUEST: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    openGallery();
+                } else {
+                    Toast.makeText(this, "Required permission not provided", Toast.LENGTH_LONG).show();
+                }
+            }
+            case CAMERA_PERMISSIONS_REQUEST: {
+                if (grantResults.length > 1
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED
                         && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                     takePicture();
@@ -140,14 +163,5 @@ public class IntroActivity extends AppCompatActivity {
         );
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
-    }
-
-    private byte[] getByteArrayImage() {
-        if (mImageBitmap == null) {
-            return null;
-        }
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        mImageBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        return stream.toByteArray();
     }
 }
