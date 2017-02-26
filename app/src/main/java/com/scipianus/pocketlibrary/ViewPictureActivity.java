@@ -1,11 +1,15 @@
 package com.scipianus.pocketlibrary;
 
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -17,6 +21,11 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.utils.Converters;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,6 +47,10 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 
 public class ViewPictureActivity extends AppCompatActivity {
     private static String IMAGE_EXTRA = "picture";
+    private final String LANGUAGE = "eng";
+    private final double EPS = 0.0000000001;
+    private TessBaseAPI mTessBaseAPI;
+    private String mTessDataPath;
     private String mCurrentPhotoPath;
     private Bitmap mImageBitmap;
     private Mat mImage;
@@ -75,6 +88,17 @@ public class ViewPictureActivity extends AppCompatActivity {
         mCroppedImage = transformPerspective(mImage, mContour);
 
         displayImage(mCroppedImage);
+
+        //initTesseract();
+
+        //detectText(mImage);
+    }
+
+    private void initTesseract() {
+        mTessDataPath = getFilesDir() + "/tesseract";
+        checkTessDataFile(new File(mTessDataPath + "/tessdata/"));
+        mTessBaseAPI = new TessBaseAPI();
+        mTessBaseAPI.init(mTessDataPath, LANGUAGE);
     }
 
     private Mat edgeDetection(Mat image) {
@@ -90,13 +114,18 @@ public class ViewPictureActivity extends AppCompatActivity {
 
     private MatOfPoint contoursFinding(Mat edges) {
         final List<MatOfPoint> contours = new ArrayList<>();
-        MatOfPoint contour = new MatOfPoint();
+        final MatOfPoint contour = new MatOfPoint();
 
         findContours(edges, contours, new Mat(), RETR_LIST, CHAIN_APPROX_SIMPLE);
         Collections.sort(contours, new Comparator<MatOfPoint>() {
             @Override
             public int compare(MatOfPoint o1, MatOfPoint o2) {
-                return contourArea(o1) > contourArea(o2) ? -1 : 1;
+                double area1 = contourArea(o1);
+                double area2 = contourArea(o2);
+                if (Math.abs(area1 - area2) < EPS)
+                    return 0;
+                else
+                    return area1 > area2 ? -1 : 1;
             }
         });
 
@@ -149,6 +178,26 @@ public class ViewPictureActivity extends AppCompatActivity {
         return transformedImage;
     }
 
+    public void detectText(final Mat image) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Bitmap bmp = Bitmap.createBitmap(image.width(), image.height(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(image, bmp);
+                mTessBaseAPI.setImage(bmp);
+                final String OCRresult = mTessBaseAPI.getUTF8Text();
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        TextView textView = (TextView) findViewById(R.id.OCRTextView);
+                        textView.setText(OCRresult);
+                    }
+                });
+            }
+        });
+        thread.start();
+    }
+
     private List<Point> sortRectCorners(final List<Point> corners) {
         List<Point> res = new ArrayList<>();
         List<Integer> idxSum = new ArrayList<Integer>() {{
@@ -163,7 +212,12 @@ public class ViewPictureActivity extends AppCompatActivity {
                 Point A, B;
                 A = corners.get(o1);
                 B = corners.get(o2);
-                return (A.x + A.y) < (B.x + B.y) ? -1 : 1;
+                double sum1 = A.x + A.y;
+                double sum2 = B.x + B.y;
+                if (Math.abs(sum1 - sum2) < EPS)
+                    return 0;
+                else
+                    return sum1 < sum2 ? -1 : 1;
             }
         });
 
@@ -173,7 +227,12 @@ public class ViewPictureActivity extends AppCompatActivity {
                 Point A, B;
                 A = corners.get(o1);
                 B = corners.get(o2);
-                return (A.x - A.y) > (B.x - B.y) ? -1 : 1;
+                double diff1 = A.x - A.y;
+                double diff2 = B.x - B.y;
+                if (Math.abs(diff1 - diff2) < EPS)
+                    return 0;
+                else
+                    return diff1 > diff2 ? -1 : 1;
             }
         });
 
@@ -205,5 +264,46 @@ public class ViewPictureActivity extends AppCompatActivity {
         contours.add(contour);
         drawContours(imageWithContour, contours, 0, new Scalar(0, 255, 0), 20);
         return imageWithContour;
+    }
+
+    private void checkTessDataFile(File dir) {
+        if (!dir.exists() && dir.mkdirs()) {
+            copyTessDataFile();
+        }
+        if (dir.exists()) {
+            String dataFilePath = mTessDataPath + "/tessdata/eng.traineddata";
+            File dataFile = new File(dataFilePath);
+
+            if (!dataFile.exists()) {
+                copyTessDataFile();
+            }
+        }
+    }
+
+    private void copyTessDataFile() {
+        try {
+            String filePath = mTessDataPath + "/tessdata/eng.traineddata";
+            AssetManager assetManager = getAssets();
+
+            InputStream inputStream = assetManager.open("tessdata/eng.traineddata");
+            OutputStream outputStream = new FileOutputStream(filePath);
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+
+            File file = new File(filePath);
+            if (!file.exists()) {
+                throw new FileNotFoundException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

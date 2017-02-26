@@ -10,10 +10,18 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.scipianus.pocketlibrary.ViewPictureActivity">
 
+    <TextView
+        android:id="@+id/OCRTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="" />
+
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
+        android:layout_below="@id/OCRTextView" />
+
+
 </RelativeLayout>
