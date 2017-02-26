@@ -4,10 +4,12 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 
@@ -35,7 +37,7 @@ import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
 import static org.opencv.imgproc.Imgproc.COLOR_BGR2GRAY;
 import static org.opencv.imgproc.Imgproc.Canny;
 import static org.opencv.imgproc.Imgproc.GaussianBlur;
-import static org.opencv.imgproc.Imgproc.RETR_LIST;
+import static org.opencv.imgproc.Imgproc.RETR_EXTERNAL;
 import static org.opencv.imgproc.Imgproc.approxPolyDP;
 import static org.opencv.imgproc.Imgproc.arcLength;
 import static org.opencv.imgproc.Imgproc.contourArea;
@@ -43,12 +45,15 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 import static org.opencv.imgproc.Imgproc.drawContours;
 import static org.opencv.imgproc.Imgproc.findContours;
 import static org.opencv.imgproc.Imgproc.getPerspectiveTransform;
+import static org.opencv.imgproc.Imgproc.isContourConvex;
+import static org.opencv.imgproc.Imgproc.resize;
 import static org.opencv.imgproc.Imgproc.warpPerspective;
 
 public class ViewPictureActivity extends AppCompatActivity {
-    private static String IMAGE_EXTRA = "picture";
+    private static final String IMAGE_EXTRA = "picture";
     private final String LANGUAGE = "eng";
     private final double EPS = 0.0000000001;
+    private final double HEIGHT = 750;
     private TessBaseAPI mTessBaseAPI;
     private String mTessDataPath;
     private String mCurrentPhotoPath;
@@ -57,7 +62,9 @@ public class ViewPictureActivity extends AppCompatActivity {
     private Mat mEdges;
     private Mat mCroppedImage;
     private MatOfPoint mContour;
-    private int nrDisplays = 0;
+    private Size mOriginalSize;
+    private int mCurrentStep = 0;
+    private Button mNextStepButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,28 +77,58 @@ public class ViewPictureActivity extends AppCompatActivity {
         if (mCurrentPhotoPath == null)
             return;
 
-        mImage = new Mat();
-        mImageBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
-        Bitmap bmp32 = mImageBitmap.copy(Bitmap.Config.ARGB_8888, true);
-        Utils.bitmapToMat(bmp32, mImage);
-
+        readImage(mCurrentPhotoPath);
         displayImage(mImage);
 
-        mEdges = edgeDetection(mImage);
+        mNextStepButton = (Button) findViewById(R.id.nextStepButton);
+        mNextStepButton.setText(R.string.find_contour);
+    }
 
-        displayImage(mEdges);
+    public void performNextStep(View view) {
+        switch (mCurrentStep) {
+            case 0:
+                mEdges = edgeDetection(mImage);
+                displayImage(mEdges);
+                mCurrentStep++;
+                mNextStepButton.setText(R.string.detect_rectangle);
+                break;
+            case 1:
+                mContour = contoursFinding(mEdges);
+                if (mContour == null) {
+                    Toast.makeText(this, "Could not find a rectangle", Toast.LENGTH_LONG).show();
+                    displayImage(mImage);
+                    mNextStepButton.setVisibility(View.GONE);
+                } else {
+                    displayImage(addContourToImage(mImage, mContour));
+                }
+                mCurrentStep++;
+                mNextStepButton.setText(R.string.adjust_perspective);
+                break;
+            case 2:
+                mCroppedImage = transformPerspective(mImage, mContour);
+                displayImage(mCroppedImage);
+                mCurrentStep++;
+                mNextStepButton.setText(R.string.run_ocr);
+                break;
+            case 3:
+                initTesseract();
+                detectText(mCroppedImage);
+                mNextStepButton.setVisibility(View.GONE);
+                break;
+            default:
+                break;
+        }
+    }
 
-        mContour = contoursFinding(mEdges);
+    private void readImage(String path) {
+        mImageBitmap = BitmapFactory.decodeFile(path);
+        Bitmap bmp32 = mImageBitmap.copy(Bitmap.Config.ARGB_8888, true);
 
-        displayImage(addContourToImage(mImage, mContour));
-
-        mCroppedImage = transformPerspective(mImage, mContour);
-
-        displayImage(mCroppedImage);
-
-        //initTesseract();
-
-        //detectText(mImage);
+        mImage = new Mat();
+        Utils.bitmapToMat(bmp32, mImage);
+        mOriginalSize = mImage.size();
+        double ratio = mImage.height() / HEIGHT;
+        resize(mImage, mImage, new Size(mImage.width() / ratio, HEIGHT));
     }
 
     private void initTesseract() {
@@ -115,8 +152,9 @@ public class ViewPictureActivity extends AppCompatActivity {
     private MatOfPoint contoursFinding(Mat edges) {
         final List<MatOfPoint> contours = new ArrayList<>();
         final MatOfPoint contour = new MatOfPoint();
+        MatOfPoint bestContour = null;
 
-        findContours(edges, contours, new Mat(), RETR_LIST, CHAIN_APPROX_SIMPLE);
+        findContours(edges, contours, new Mat(), RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
         Collections.sort(contours, new Comparator<MatOfPoint>() {
             @Override
             public int compare(MatOfPoint o1, MatOfPoint o2) {
@@ -139,11 +177,14 @@ public class ViewPictureActivity extends AppCompatActivity {
 
             if (approx.toList().size() == 4) {
                 approx.convertTo(contour, CvType.CV_32S);
-                return contour;
+                if (isContourConvex(contour) &&
+                        (bestContour == null || contourArea(bestContour) < contourArea(contour))) {
+                    bestContour = new MatOfPoint(contour.clone());
+                }
             }
         }
 
-        return null;
+        return bestContour;
     }
 
     private Mat transformPerspective(Mat image, MatOfPoint contour) {
@@ -245,24 +286,28 @@ public class ViewPictureActivity extends AppCompatActivity {
     }
 
     private void displayImage(final Mat image) {
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Bitmap bmp = Bitmap.createBitmap(image.width(), image.height(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(image, bmp);
-                ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                imageView.setImageBitmap(bmp);
-            }
-        }, nrDisplays * 1000);
-        nrDisplays++;
+        Mat resizedImage = new Mat();
+        Size size = new Size();
+        if (image.width() > image.height()) {
+            size.width = mOriginalSize.width;
+            size.height = size.width * image.height() / image.width();
+        } else {
+            size.height = mOriginalSize.height;
+            size.width = size.height * image.width() / image.height();
+        }
+        resize(image, resizedImage, size);
+        Bitmap bmp = Bitmap.createBitmap(resizedImage.width(), resizedImage.height(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(resizedImage, bmp);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setImageBitmap(bmp);
     }
 
     private Mat addContourToImage(Mat image, MatOfPoint contour) {
         Mat imageWithContour = image.clone();
+        Scalar color = new Scalar(0, 255, 0, 255);
         List<MatOfPoint> contours = new ArrayList<>();
         contours.add(contour);
-        drawContours(imageWithContour, contours, 0, new Scalar(0, 255, 0), 20);
+        drawContours(imageWithContour, contours, 0, color, 3);
         return imageWithContour;
     }
 

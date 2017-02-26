@@ -17,11 +17,20 @@
         android:layout_centerHorizontal="true"
         android:text="" />
 
+    <Button
+        android:id="@+id/nextStepButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="performNextStep"
+        android:text="" />
+
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_above="@id/nextStepButton"
         android:layout_below="@id/OCRTextView" />
-
 
 </RelativeLayout>

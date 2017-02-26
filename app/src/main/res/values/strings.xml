@@ -2,4 +2,8 @@
     <string name="app_name">Pocket Library</string>
     <string name="take_picture_button_title">Take picture</string>
     <string name="open_gallery_button_title">Open from gallery</string>
+    <string name="find_contour">Find contour</string>
+    <string name="detect_rectangle">Detect rectangle</string>
+    <string name="adjust_perspective">Adjust perspective</string>
+    <string name="run_ocr">Run OCR</string>
 </resources>
