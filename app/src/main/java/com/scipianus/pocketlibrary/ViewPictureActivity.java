@@ -1,5 +1,6 @@
 package com.scipianus.pocketlibrary;
 
+import android.app.ActionBar;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -71,6 +72,10 @@ public class ViewPictureActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_picture);
 
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null)
+            actionBar.setDisplayHomeAsUpEnabled(true);
+
         Bundle extras = getIntent().getExtras();
         mCurrentPhotoPath = extras.getString(IMAGE_EXTRA);
 
@@ -129,13 +134,6 @@ public class ViewPictureActivity extends AppCompatActivity {
         mOriginalSize = mImage.size();
         double ratio = mImage.height() / HEIGHT;
         resize(mImage, mImage, new Size(mImage.width() / ratio, HEIGHT));
-    }
-
-    private void initTesseract() {
-        mTessDataPath = getFilesDir() + "/tesseract";
-        checkTessDataFile(new File(mTessDataPath + "/tessdata/"));
-        mTessBaseAPI = new TessBaseAPI();
-        mTessBaseAPI.init(mTessDataPath, LANGUAGE);
     }
 
     private Mat edgeDetection(Mat image) {
@@ -219,6 +217,13 @@ public class ViewPictureActivity extends AppCompatActivity {
         return transformedImage;
     }
 
+    private void initTesseract() {
+        mTessDataPath = getFilesDir() + "/tesseract";
+        checkTessDataFile(new File(mTessDataPath + "/tessdata/"));
+        mTessBaseAPI = new TessBaseAPI();
+        mTessBaseAPI.init(mTessDataPath, LANGUAGE);
+    }
+
     public void detectText(final Mat image) {
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -231,7 +236,8 @@ public class ViewPictureActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     public void run() {
                         TextView textView = (TextView) findViewById(R.id.OCRTextView);
-                        textView.setText(OCRresult);
+                        if (textView != null)
+                            textView.setText(OCRresult);
                     }
                 });
             }
