@@ -118,7 +118,7 @@ public class IntroActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
                 }
-            } else if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK && data != null) {
+            } else if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
                 launchViewPictureActivity();
             } else {
                 Toast.makeText(this, "You haven't picked any image", Toast.LENGTH_LONG).show();
