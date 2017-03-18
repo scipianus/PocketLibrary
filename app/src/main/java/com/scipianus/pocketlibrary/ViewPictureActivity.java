@@ -55,10 +55,12 @@ public class ViewPictureActivity extends AppCompatActivity {
     private final String LANGUAGE = "eng";
     private final double EPS = 0.0000000001;
     private final double HEIGHT = 750;
+    private double mRatio;
     private TessBaseAPI mTessBaseAPI;
     private String mTessDataPath;
     private String mCurrentPhotoPath;
     private Bitmap mImageBitmap;
+    private Mat mInitialImage;
     private Mat mImage;
     private Mat mEdges;
     private Mat mCroppedImage;
@@ -110,7 +112,7 @@ public class ViewPictureActivity extends AppCompatActivity {
                 mNextStepButton.setText(R.string.adjust_perspective);
                 break;
             case 2:
-                mCroppedImage = transformPerspective(mImage, mContour);
+                mCroppedImage = transformPerspective(mInitialImage, mContour);
                 displayImage(mCroppedImage);
                 mCurrentStep++;
                 mNextStepButton.setText(R.string.run_ocr);
@@ -131,9 +133,10 @@ public class ViewPictureActivity extends AppCompatActivity {
 
         mImage = new Mat();
         Utils.bitmapToMat(bmp32, mImage);
+        mInitialImage = mImage.clone();
         mOriginalSize = mImage.size();
-        double ratio = mImage.height() / HEIGHT;
-        resize(mImage, mImage, new Size(mImage.width() / ratio, HEIGHT));
+        mRatio = mImage.height() / HEIGHT;
+        resize(mImage, mImage, new Size(mImage.width() / mRatio, HEIGHT));
     }
 
     private Mat edgeDetection(Mat image) {
@@ -188,6 +191,10 @@ public class ViewPictureActivity extends AppCompatActivity {
     private Mat transformPerspective(Mat image, MatOfPoint contour) {
         Mat transformedImage = new Mat();
         List<Point> corners = sortRectCorners(contour.toList());
+        for (Point p : corners) {
+            p.x *= mRatio;
+            p.y *= mRatio;
+        }
         Point topLeft = corners.get(0);
         Point topRight = corners.get(1);
         Point bottomRight = corners.get(2);
