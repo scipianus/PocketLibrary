@@ -1,6 +1,7 @@
 package com.scipianus.pocketlibrary;
 
 import android.app.ActionBar;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
+import com.scipianus.pocketlibrary.utils.Contour;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -52,10 +54,14 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 
 public class ViewPictureActivity extends AppCompatActivity {
     private static final String IMAGE_EXTRA = "picture";
+    private static final String IMAGE_WIDTH = "width";
+    private static final String IMAGE_HEIGHT = "height";
+    private static final String POINTS_EXTRA = "corners";
+    private static final int ADJUST_CROP = 1;
     private final String LANGUAGE = "eng";
     private final double EPS = 0.0000000001;
     private final double HEIGHT = 750;
-    private double mRatio;
+    private double mRatio, mAdjustRatio;
     private TessBaseAPI mTessBaseAPI;
     private String mTessDataPath;
     private String mCurrentPhotoPath;
@@ -68,6 +74,8 @@ public class ViewPictureActivity extends AppCompatActivity {
     private Size mOriginalSize;
     private int mCurrentStep = 0;
     private Button mNextStepButton;
+    private Button mAdjustCropButton;
+    private Button mConfirmCropButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +97,9 @@ public class ViewPictureActivity extends AppCompatActivity {
 
         mNextStepButton = (Button) findViewById(R.id.nextStepButton);
         mNextStepButton.setText(R.string.find_contour);
+
+        mAdjustCropButton = (Button) findViewById(R.id.adjustCropButton);
+        mConfirmCropButton = (Button) findViewById(R.id.confirmCropButton);
     }
 
     public void performNextStep(View view) {
@@ -103,18 +114,28 @@ public class ViewPictureActivity extends AppCompatActivity {
                 mContour = contoursFinding(mEdges);
                 if (mContour == null) {
                     Toast.makeText(this, "Could not find a rectangle", Toast.LENGTH_LONG).show();
-                    displayImage(mImage);
-                    mNextStepButton.setVisibility(View.GONE);
-                } else {
-                    displayImage(addContourToImage(mImage, mContour));
+                    List<Point> list = new ArrayList<>();
+                    list.add(new Point(0, 0));
+                    list.add(new Point(0, mImage.height()));
+                    list.add(new Point(mImage.width(), mImage.height()));
+                    list.add(new Point(mImage.width(), 0));
+                    mContour = new MatOfPoint();
+                    mContour.fromList(list);
+                    mContour.fromList(new ArrayList<Point>());
                 }
+                displayImage(addContourToImage(mImage, mContour));
                 mCurrentStep++;
-                mNextStepButton.setText(R.string.adjust_perspective);
+                mNextStepButton.setVisibility(View.INVISIBLE);
+                mAdjustCropButton.setVisibility(View.VISIBLE);
+                mConfirmCropButton.setVisibility(View.VISIBLE);
                 break;
             case 2:
                 mCroppedImage = transformPerspective(mInitialImage, mContour);
                 displayImage(mCroppedImage);
                 mCurrentStep++;
+                mNextStepButton.setVisibility(View.VISIBLE);
+                mAdjustCropButton.setVisibility(View.INVISIBLE);
+                mConfirmCropButton.setVisibility(View.INVISIBLE);
                 mNextStepButton.setText(R.string.run_ocr);
                 break;
             case 3:
@@ -125,6 +146,31 @@ public class ViewPictureActivity extends AppCompatActivity {
             default:
                 break;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == ADJUST_CROP) {
+            if (resultCode == RESULT_OK) {
+                Contour contour = data.getExtras().getParcelable(POINTS_EXTRA);
+                if (contour != null) {
+                    List<Point> points = toListOfOpenCVPoints(contour.getPoints());
+                    mContour.fromList(points);
+                    displayImage(addContourToImage(mImage, mContour));
+                }
+            }
+        }
+    }
+
+    public void openAdjustCropActivity(View v) {
+        Intent intent = new Intent(this, AdjustPictureCropActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString(IMAGE_EXTRA, mCurrentPhotoPath);
+        bundle.putParcelable(POINTS_EXTRA, new Contour(toListOfGraphicPoints(sortRectCorners(mContour.toList()))));
+        bundle.putInt(IMAGE_WIDTH, getImageSize().getWidth());
+        bundle.putInt(IMAGE_HEIGHT, getImageSize().getHeight());
+        intent.putExtras(bundle);
+        startActivityForResult(intent, ADJUST_CROP);
     }
 
     private void readImage(String path) {
@@ -363,5 +409,41 @@ public class ViewPictureActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private List<android.graphics.Point> toListOfGraphicPoints(List<Point> points) {
+        mAdjustRatio = getImageSize().getHeight() / HEIGHT;
+        List<android.graphics.Point> list = new ArrayList<>();
+        for (Point point : points) {
+            list.add(new android.graphics.Point(
+                    (int) (mAdjustRatio * point.x),
+                    (int) (mAdjustRatio * point.y)));
+        }
+        return list;
+    }
+
+
+    private List<Point> toListOfOpenCVPoints(List<android.graphics.Point> points) {
+        List<Point> list = new ArrayList<>();
+        for (android.graphics.Point point : points) {
+            list.add(new Point(point.x / mAdjustRatio, point.y / mAdjustRatio));
+        }
+        return list;
+    }
+
+    private android.util.Size getImageSize() {
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        final int actualHeight, actualWidth;
+        final int imageViewHeight = imageView.getHeight(), imageViewWidth = imageView.getWidth();
+        final int bitmapHeight = mImageBitmap.getHeight(), bitmapWidth = mImageBitmap.getWidth();
+        if (imageViewHeight * bitmapWidth <= imageViewWidth * bitmapHeight) {
+            actualWidth = bitmapWidth * imageViewHeight / bitmapHeight;
+            actualHeight = imageViewHeight;
+        } else {
+            actualHeight = bitmapHeight * imageViewWidth / bitmapWidth;
+            actualWidth = imageViewWidth;
+        }
+
+        return new android.util.Size(actualWidth, actualHeight);
     }
 }

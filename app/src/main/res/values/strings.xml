@@ -6,4 +6,6 @@
     <string name="detect_rectangle">Detect rectangle</string>
     <string name="adjust_perspective">Adjust perspective</string>
     <string name="run_ocr">Run OCR</string>
+    <string name="adjust_crop_button">Adjust</string>
+    <string name="confirm_crop_button">Confirm</string>
 </resources>

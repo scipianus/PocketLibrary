@@ -26,6 +26,26 @@
         android:onClick="performNextStep"
         android:text="" />
 
+    <Button
+        android:id="@+id/adjustCropButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@+id/nextStepButton"
+        android:onClick="openAdjustCropActivity"
+        android:text="@string/adjust_crop_button"
+        android:visibility="invisible" />
+
+    <Button
+        android:id="@+id/confirmCropButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@+id/nextStepButton"
+        android:onClick="performNextStep"
+        android:text="@string/confirm_crop_button"
+        android:visibility="invisible" />
+
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="wrap_content"

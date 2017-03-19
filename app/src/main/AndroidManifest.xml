@@ -27,6 +27,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".IntroActivity" />
         </activity>
+        <activity android:name=".AdjustPictureCropActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ViewPictureActivity" />
+        </activity>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
