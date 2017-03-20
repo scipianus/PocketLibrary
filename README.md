@@ -1,2 +1,4 @@
 # PocketLibrary
-Bachelor's Degree graduation project - Android app for recognizing books by their covers
+![logo](https://github.com/scipianus/PocketLibrary/blob/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png)
+
+Bachelor's Degree graduation project - Android app for scanning and recognizing books by their covers
