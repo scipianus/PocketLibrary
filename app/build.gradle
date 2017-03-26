@@ -29,4 +29,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile project(':libraries:opencv')
     compile project(':libraries:tess-two')
+    debugCompile project(path: ':TensorFlow-Android-Inference', configuration: 'debug')
+    releaseCompile project(path: ':TensorFlow-Android-Inference', configuration: 'release')
 }
+
+
