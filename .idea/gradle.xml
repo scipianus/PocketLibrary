@@ -11,7 +11,6 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/libraries" />
             <option value="$PROJECT_DIR$/libraries/opencv" />
-            <option value="$PROJECT_DIR$/libraries/tensorflow/tensorflow/contrib/android/cmake" />
             <option value="$PROJECT_DIR$/libraries/tess-two" />
           </set>
         </option>

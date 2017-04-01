@@ -44,6 +44,11 @@ public class AdjustPictureCropActivity extends AppCompatActivity {
         mCurrentPhotoPath = extras.getString(IMAGE_EXTRA);
         mContour = (Contour) extras.get(POINTS_EXTRA);
         mSize = new Size(extras.getInt(IMAGE_WIDTH), extras.getInt(IMAGE_HEIGHT));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
 
         if (mCurrentPhotoPath == null)
             return;

@@ -32,6 +32,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ViewPictureActivity" />
         </activity>
+        <activity android:name=".DetectBookActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".IntroActivity" />
+        </activity>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
