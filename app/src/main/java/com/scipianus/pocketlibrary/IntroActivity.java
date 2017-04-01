@@ -32,6 +32,8 @@ public class IntroActivity extends AppCompatActivity {
 
     static {
         System.loadLibrary("opencv_java3");
+        System.loadLibrary("caffe");
+        System.loadLibrary("caffe_jni");
     }
 
     @Override

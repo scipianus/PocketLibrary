@@ -6,11 +6,12 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
@@ -29,12 +30,16 @@ import org.opencv.utils.Converters;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
 import static org.opencv.imgproc.Imgproc.COLOR_BGR2GRAY;
@@ -65,6 +70,7 @@ public class ViewPictureActivity extends AppCompatActivity {
     private TessBaseAPI mTessBaseAPI;
     private String mTessDataPath;
     private String mCurrentPhotoPath;
+    private String mCroppedPhotoPath;
     private Bitmap mImageBitmap;
     private Mat mInitialImage;
     private Mat mImage;
@@ -72,10 +78,11 @@ public class ViewPictureActivity extends AppCompatActivity {
     private Mat mCroppedImage;
     private MatOfPoint mContour;
     private Size mOriginalSize;
-    private int mCurrentStep = 0;
+    private int mCurrentStep;
     private Button mNextStepButton;
     private Button mAdjustCropButton;
     private Button mConfirmCropButton;
+    private ProgressBar mProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,9 +94,17 @@ public class ViewPictureActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
 
         Bundle extras = getIntent().getExtras();
-        mCurrentPhotoPath = extras.getString(IMAGE_EXTRA);
+        if (extras != null)
+            mCurrentPhotoPath = extras.getString(IMAGE_EXTRA);
 
-        if (mCurrentPhotoPath == null)
+        mCurrentStep = 0;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (mCurrentPhotoPath == null || mCurrentStep != 0)
             return;
 
         readImage(mCurrentPhotoPath);
@@ -100,6 +115,7 @@ public class ViewPictureActivity extends AppCompatActivity {
 
         mAdjustCropButton = (Button) findViewById(R.id.adjustCropButton);
         mConfirmCropButton = (Button) findViewById(R.id.confirmCropButton);
+        mProgressBar = (ProgressBar) findViewById(R.id.savingProgressBar);
     }
 
     public void performNextStep(View view) {
@@ -136,12 +152,10 @@ public class ViewPictureActivity extends AppCompatActivity {
                 mNextStepButton.setVisibility(View.VISIBLE);
                 mAdjustCropButton.setVisibility(View.INVISIBLE);
                 mConfirmCropButton.setVisibility(View.INVISIBLE);
-                mNextStepButton.setText(R.string.run_ocr);
+                mNextStepButton.setText(R.string.detect_book);
                 break;
             case 3:
-                initTesseract();
-                detectText(mCroppedImage);
-                mNextStepButton.setVisibility(View.GONE);
+                saveCroppedImage(mCroppedImage);
                 break;
             default:
                 break;
@@ -160,6 +174,14 @@ public class ViewPictureActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    public void openDetectBookActivity() {
+        Intent intent = new Intent(this, DetectBookActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString(IMAGE_EXTRA, mCroppedPhotoPath);
+        intent.putExtras(bundle);
+        startActivity(intent);
     }
 
     public void openAdjustCropActivity(View v) {
@@ -288,9 +310,9 @@ public class ViewPictureActivity extends AppCompatActivity {
 
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        TextView textView = (TextView) findViewById(R.id.OCRTextView);
-                        if (textView != null)
-                            textView.setText(OCRresult);
+                        //TextView textView = (TextView) findViewById(R.id.OCRTextView);
+                        //if (textView != null)
+                        //    textView.setText(OCRresult);
                     }
                 });
             }
@@ -345,6 +367,11 @@ public class ViewPictureActivity extends AppCompatActivity {
     }
 
     private void displayImage(final Mat image) {
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setImageBitmap(toBitmap(image));
+    }
+
+    private Bitmap toBitmap(final Mat image) {
         Mat resizedImage = new Mat();
         Size size = new Size();
         if (image.width() > image.height()) {
@@ -357,8 +384,7 @@ public class ViewPictureActivity extends AppCompatActivity {
         resize(image, resizedImage, size);
         Bitmap bmp = Bitmap.createBitmap(resizedImage.width(), resizedImage.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(resizedImage, bmp);
-        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setImageBitmap(bmp);
+        return bmp;
     }
 
     private Mat addContourToImage(Mat image, MatOfPoint contour) {
@@ -445,5 +471,53 @@ public class ViewPictureActivity extends AppCompatActivity {
         }
 
         return new android.util.Size(actualWidth, actualHeight);
+    }
+
+    private void saveCroppedImage(final Mat image) {
+        mNextStepButton.setVisibility(View.INVISIBLE);
+        mProgressBar.setVisibility(View.VISIBLE);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+                String imageFileName = "JPEG_" + timeStamp + "_crop";
+                File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                try {
+                    File imageFile = File.createTempFile(
+                            imageFileName,
+                            ".jpg",
+                            storageDir
+                    );
+                    mCroppedPhotoPath = imageFile.getAbsolutePath();
+                    FileOutputStream out = null;
+                    Bitmap bitmap = toBitmap(image);
+                    try {
+                        out = new FileOutputStream(mCroppedPhotoPath);
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            if (out != null) {
+                                out.close();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        openDetectBookActivity();
+                        mProgressBar.setVisibility(View.INVISIBLE);
+                    }
+                });
+            }
+        });
+        thread.start();
+
     }
 }

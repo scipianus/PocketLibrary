@@ -10,13 +10,6 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.scipianus.pocketlibrary.ViewPictureActivity">
 
-    <TextView
-        android:id="@+id/OCRTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:text="" />
-
     <Button
         android:id="@+id/nextStepButton"
         android:layout_width="wrap_content"
@@ -51,6 +44,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@id/nextStepButton"
-        android:layout_below="@id/OCRTextView" />
+        android:contentDescription="@string/image_preview" />
+
+    <ProgressBar
+        android:id="@+id/savingProgressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/imageView"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
 
 </RelativeLayout>
