@@ -2,7 +2,6 @@ package com.scipianus.pocketlibrary;
 
 import android.app.ActionBar;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -16,6 +15,7 @@ import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.scipianus.pocketlibrary.utils.Contour;
+import com.scipianus.pocketlibrary.utils.FileUtils;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -28,11 +28,8 @@ import org.opencv.core.Size;
 import org.opencv.utils.Converters;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -294,7 +291,8 @@ public class ViewPictureActivity extends AppCompatActivity {
 
     private void initTesseract() {
         mTessDataPath = getFilesDir() + "/tesseract";
-        checkTessDataFile(new File(mTessDataPath + "/tessdata/"));
+        File dir = new File(mTessDataPath + "/tessdata/");
+        FileUtils.transferDataFile(getAssets(), dir, mTessDataPath + "/tessdata/eng.traineddata", "tessdata/eng.traineddata");
         mTessBaseAPI = new TessBaseAPI();
         mTessBaseAPI.init(mTessDataPath, LANGUAGE);
     }
@@ -394,47 +392,6 @@ public class ViewPictureActivity extends AppCompatActivity {
         contours.add(contour);
         drawContours(imageWithContour, contours, 0, color, 3);
         return imageWithContour;
-    }
-
-    private void checkTessDataFile(File dir) {
-        if (!dir.exists() && dir.mkdirs()) {
-            copyTessDataFile();
-        }
-        if (dir.exists()) {
-            String dataFilePath = mTessDataPath + "/tessdata/eng.traineddata";
-            File dataFile = new File(dataFilePath);
-
-            if (!dataFile.exists()) {
-                copyTessDataFile();
-            }
-        }
-    }
-
-    private void copyTessDataFile() {
-        try {
-            String filePath = mTessDataPath + "/tessdata/eng.traineddata";
-            AssetManager assetManager = getAssets();
-
-            InputStream inputStream = assetManager.open("tessdata/eng.traineddata");
-            OutputStream outputStream = new FileOutputStream(filePath);
-
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, read);
-            }
-
-            outputStream.flush();
-            outputStream.close();
-            inputStream.close();
-
-            File file = new File(filePath);
-            if (!file.exists()) {
-                throw new FileNotFoundException();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private List<android.graphics.Point> toListOfGraphicPoints(List<Point> points) {
