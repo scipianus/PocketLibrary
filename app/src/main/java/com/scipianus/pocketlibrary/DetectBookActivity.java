@@ -1,23 +1,19 @@
 package com.scipianus.pocketlibrary;
 
 import android.app.ActionBar;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
+import com.scipianus.pocketlibrary.utils.FileUtils;
 import com.sh1r0.caffe_android_lib.CaffeMobile;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * Created by scipianus on 01-Apr-17.
@@ -73,7 +69,9 @@ public class DetectBookActivity extends AppCompatActivity {
 
     private void initializeCaffe() {
         mCaffeDataPath = getFilesDir() + "/caffe_mobile/";
-        checkCaffeDataFiles(new File(mCaffeDataPath + "/caffe/bvlc_alexnet/"));
+        File dir = new File(mCaffeDataPath + "/caffe/bvlc_alexnet/");
+        FileUtils.transferDataFile(getAssets(), dir, MODEL_PATH, mCaffeDataPath + MODEL_PATH);
+        FileUtils.transferDataFile(getAssets(), dir, WEIGHTS_PATH, mCaffeDataPath + WEIGHTS_PATH);
         mCaffeMobile = new CaffeMobile();
         mCaffeMobile.setNumThreads(4);
         mCaffeMobile.loadModel(mCaffeDataPath + MODEL_PATH, mCaffeDataPath + WEIGHTS_PATH);
@@ -98,50 +96,5 @@ public class DetectBookActivity extends AppCompatActivity {
 
     private void searchBook() {
         // TODO: add the feature vectors database and search the current one
-    }
-
-    private void checkCaffeDataFiles(File dir) {
-        if (!dir.exists() && dir.mkdirs()) {
-            copyCaffeDataFiles(MODEL_PATH, mCaffeDataPath + MODEL_PATH);
-            copyCaffeDataFiles(WEIGHTS_PATH, mCaffeDataPath + WEIGHTS_PATH);
-        }
-        if (dir.exists()) {
-            File modelFile = new File(mCaffeDataPath + MODEL_PATH);
-            File weightsFile = new File(mCaffeDataPath + WEIGHTS_PATH);
-
-            if (!modelFile.exists()) {
-                copyCaffeDataFiles(MODEL_PATH, mCaffeDataPath + MODEL_PATH);
-            }
-
-            if (!weightsFile.exists()) {
-                copyCaffeDataFiles(WEIGHTS_PATH, mCaffeDataPath + WEIGHTS_PATH);
-            }
-        }
-    }
-
-    private void copyCaffeDataFiles(String inputPath, String outputPath) {
-        try {
-            AssetManager assetManager = getAssets();
-
-            InputStream inputStream = assetManager.open(inputPath);
-            OutputStream outputStream = new FileOutputStream(outputPath);
-
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, read);
-            }
-
-            outputStream.flush();
-            outputStream.close();
-            inputStream.close();
-
-            File file = new File(outputPath);
-            if (!file.exists()) {
-                throw new FileNotFoundException();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
