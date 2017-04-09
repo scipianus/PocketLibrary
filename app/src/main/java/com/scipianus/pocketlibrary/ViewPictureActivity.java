@@ -20,9 +20,11 @@ import com.scipianus.pocketlibrary.utils.FileUtils;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.utils.Converters;
@@ -40,16 +42,20 @@ import java.util.Locale;
 
 import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
 import static org.opencv.imgproc.Imgproc.COLOR_BGR2GRAY;
+import static org.opencv.imgproc.Imgproc.COLOR_RGBA2RGB;
 import static org.opencv.imgproc.Imgproc.Canny;
+import static org.opencv.imgproc.Imgproc.GC_INIT_WITH_RECT;
 import static org.opencv.imgproc.Imgproc.GaussianBlur;
-import static org.opencv.imgproc.Imgproc.RETR_EXTERNAL;
+import static org.opencv.imgproc.Imgproc.RETR_TREE;
 import static org.opencv.imgproc.Imgproc.approxPolyDP;
 import static org.opencv.imgproc.Imgproc.arcLength;
 import static org.opencv.imgproc.Imgproc.contourArea;
+import static org.opencv.imgproc.Imgproc.convexHull;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 import static org.opencv.imgproc.Imgproc.drawContours;
 import static org.opencv.imgproc.Imgproc.findContours;
 import static org.opencv.imgproc.Imgproc.getPerspectiveTransform;
+import static org.opencv.imgproc.Imgproc.grabCut;
 import static org.opencv.imgproc.Imgproc.isContourConvex;
 import static org.opencv.imgproc.Imgproc.resize;
 import static org.opencv.imgproc.Imgproc.warpPerspective;
@@ -60,6 +66,7 @@ public class ViewPictureActivity extends AppCompatActivity {
     private static final String IMAGE_HEIGHT = "height";
     private static final String POINTS_EXTRA = "corners";
     private static final int ADJUST_CROP = 1;
+    private static final double GRABCUT_EDGE = 0.05;
     private final String LANGUAGE = "eng";
     private final double EPS = 0.0000000001;
     private final double HEIGHT = 750;
@@ -71,6 +78,7 @@ public class ViewPictureActivity extends AppCompatActivity {
     private Bitmap mImageBitmap;
     private Mat mInitialImage;
     private Mat mImage;
+    private Mat mForeground;
     private Mat mEdges;
     private Mat mCroppedImage;
     private MatOfPoint mContour;
@@ -108,22 +116,27 @@ public class ViewPictureActivity extends AppCompatActivity {
         displayImage(mImage);
 
         mNextStepButton = (Button) findViewById(R.id.nextStepButton);
-        mNextStepButton.setText(R.string.find_contour);
+        mNextStepButton.setText(R.string.remove_background);
 
         mAdjustCropButton = (Button) findViewById(R.id.adjustCropButton);
         mConfirmCropButton = (Button) findViewById(R.id.confirmCropButton);
-        mProgressBar = (ProgressBar) findViewById(R.id.savingProgressBar);
+        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
     }
 
     public void performNextStep(View view) {
         switch (mCurrentStep) {
             case 0:
-                mEdges = edgeDetection(mImage);
+                applyGrabCut(mImage);
+                mCurrentStep++;
+                mNextStepButton.setText(R.string.find_contour);
+                break;
+            case 1:
+                mEdges = edgeDetection(mForeground);
                 displayImage(mEdges);
                 mCurrentStep++;
                 mNextStepButton.setText(R.string.detect_rectangle);
                 break;
-            case 1:
+            case 2:
                 mContour = contoursFinding(mEdges);
                 if (mContour == null) {
                     Toast.makeText(this, "Could not find a rectangle", Toast.LENGTH_LONG).show();
@@ -142,7 +155,7 @@ public class ViewPictureActivity extends AppCompatActivity {
                 mAdjustCropButton.setVisibility(View.VISIBLE);
                 mConfirmCropButton.setVisibility(View.VISIBLE);
                 break;
-            case 2:
+            case 3:
                 mCroppedImage = transformPerspective(mInitialImage, mContour);
                 displayImage(mCroppedImage);
                 mCurrentStep++;
@@ -151,7 +164,7 @@ public class ViewPictureActivity extends AppCompatActivity {
                 mConfirmCropButton.setVisibility(View.INVISIBLE);
                 mNextStepButton.setText(R.string.detect_book);
                 break;
-            case 3:
+            case 4:
                 saveCroppedImage(mCroppedImage);
                 break;
             default:
@@ -202,6 +215,49 @@ public class ViewPictureActivity extends AppCompatActivity {
         mOriginalSize = mImage.size();
         mRatio = mImage.height() / HEIGHT;
         resize(mImage, mImage, new Size(mImage.width() / mRatio, HEIGHT));
+        cvtColor(mImage, mImage, COLOR_RGBA2RGB);
+    }
+
+    private void applyGrabCut(final Mat image) {
+        mNextStepButton.setVisibility(View.INVISIBLE);
+        mProgressBar.setVisibility(View.VISIBLE);
+        Thread thread = new Thread(new Runnable() {
+            private Mat result;
+
+            @Override
+            public void run() {
+                Mat mask = new Mat(image.size(), CvType.CV_8UC1);
+                Rect rect = new Rect(
+                        new Point(GRABCUT_EDGE * image.width(), GRABCUT_EDGE * image.height()),
+                        new Point((1 - GRABCUT_EDGE) * image.width(), (1 - GRABCUT_EDGE) * image.height()));
+                Mat backgroundModel = new Mat();
+                Mat foregroundModel = new Mat();
+                grabCut(image, mask, rect, backgroundModel, foregroundModel, 5, GC_INIT_WITH_RECT);
+                for (int i = 0; i < mask.height(); ++i) {
+                    for (int j = 0; j < mask.width(); ++j) {
+                        if (mask.get(i, j)[0] == 0 || mask.get(i, j)[0] == 2) {
+                            mask.put(i, j, 0);
+                        } else {
+                            mask.put(i, j, 1);
+                        }
+                    }
+                }
+                result = new Mat(image.size(), image.type());
+                image.copyTo(result, mask);
+
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        displayImage(result);
+                        mForeground = result.clone();
+                        mProgressBar.setVisibility(View.INVISIBLE);
+                        mNextStepButton.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        });
+        thread.start();
+
     }
 
     private Mat edgeDetection(Mat image) {
@@ -220,7 +276,7 @@ public class ViewPictureActivity extends AppCompatActivity {
         final MatOfPoint contour = new MatOfPoint();
         MatOfPoint bestContour = null;
 
-        findContours(edges, contours, new Mat(), RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+        findContours(edges, contours, new Mat(), RETR_TREE, CHAIN_APPROX_SIMPLE);
         Collections.sort(contours, new Comparator<MatOfPoint>() {
             @Override
             public int compare(MatOfPoint o1, MatOfPoint o2) {
@@ -234,9 +290,16 @@ public class ViewPictureActivity extends AppCompatActivity {
         });
 
         for (MatOfPoint c : contours) {
+            MatOfInt convexHullIndices = new MatOfInt();
+            convexHull(c, convexHullIndices);
+            List<Point> convexHullPoints = new ArrayList<>();
+            for (int idx : convexHullIndices.toList()) {
+                convexHullPoints.add(c.toList().get(idx));
+            }
+
             MatOfPoint2f c2f = new MatOfPoint2f();
             MatOfPoint2f approx = new MatOfPoint2f();
-            c.convertTo(c2f, CvType.CV_32FC2);
+            c2f.fromList(convexHullPoints);
 
             double perimeter = arcLength(c2f, true);
             approxPolyDP(c2f, approx, 0.02 * perimeter, true);
@@ -250,7 +313,39 @@ public class ViewPictureActivity extends AppCompatActivity {
             }
         }
 
+        MatOfPoint boundingBoxContour = getBoundingBoxContour(edges);
+        if (contourArea(bestContour) / contourArea(boundingBoxContour) < 0.5) {
+            return boundingBoxContour;
+        }
         return bestContour;
+    }
+
+    private MatOfPoint getBoundingBoxContour(Mat image) {
+        int minX, maxX, minY, maxY;
+        minX = image.width();
+        minY = image.height();
+        maxX = 0;
+        maxY = 0;
+        for (int i = 0; i < image.height(); ++i) {
+            for (int j = 0; j < image.width(); ++j) {
+                if (image.get(i, j)[0] >= 127) {
+                    minX = Math.min(minX, j);
+                    minY = Math.min(minY, i);
+                    maxX = Math.max(maxX, j);
+                    maxY = Math.max(maxY, i);
+                }
+            }
+        }
+
+        List<Point> boundingRectPoints = new ArrayList<Point>();
+        boundingRectPoints.add(new Point(minX, minY));
+        boundingRectPoints.add(new Point(minX, maxY));
+        boundingRectPoints.add(new Point(maxX, maxY));
+        boundingRectPoints.add(new Point(maxX, minY));
+
+        MatOfPoint boundingRectContour = new MatOfPoint();
+        boundingRectContour.fromList(boundingRectPoints);
+        return boundingRectContour;
     }
 
     private Mat transformPerspective(Mat image, MatOfPoint contour) {

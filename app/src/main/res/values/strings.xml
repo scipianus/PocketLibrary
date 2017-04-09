@@ -12,4 +12,5 @@
     <string name="image_preview">Image preview</string>
     <string name="extracting_features">Extracting features</string>
     <string name="database_searching">Searching in the database</string>
+    <string name="remove_background">Remove background</string>
 </resources>
