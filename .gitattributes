@@ -1,1 +1,2 @@
 *.caffemodel filter=lfs diff=lfs merge=lfs -text
+scores_m.txt filter=lfs diff=lfs merge=lfs -text
