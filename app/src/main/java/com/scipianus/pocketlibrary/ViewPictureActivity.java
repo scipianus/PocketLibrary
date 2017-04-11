@@ -120,7 +120,7 @@ public class ViewPictureActivity extends AppCompatActivity {
 
         mAdjustCropButton = (Button) findViewById(R.id.adjustCropButton);
         mConfirmCropButton = (Button) findViewById(R.id.confirmCropButton);
-        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
+        mProgressBar = (ProgressBar) findViewById(R.id.extractProgressBar);
     }
 
     public void performNextStep(View view) {

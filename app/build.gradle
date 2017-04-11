@@ -25,10 +25,12 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.3.1'
     compile 'com.rmtheis:tess-two:6.2.0'
     testCompile 'junit:junit:4.12'
     compile project(':libraries:opencv')
     compile project(':libraries:tess-two')
+    provided "org.projectlombok:lombok:1.12.6"
 }
 
 
