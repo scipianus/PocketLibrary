@@ -141,6 +141,7 @@ public class IntroActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(this, "Required permission not provided", Toast.LENGTH_LONG).show();
                 }
+                break;
             }
             case CAMERA_PERMISSIONS_REQUEST: {
                 if (grantResults.length > 1
@@ -150,7 +151,10 @@ public class IntroActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(this, "Required permission not provided", Toast.LENGTH_LONG).show();
                 }
+                break;
             }
+            default:
+                break;
         }
     }
 

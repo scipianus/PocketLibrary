@@ -37,8 +37,9 @@ public class DetectBookActivity extends AppCompatActivity {
     private static final String MODEL_PATH = "caffe/bvlc_alexnet/deploy.prototxt";
     private static final String WEIGHTS_PATH = "caffe/bvlc_alexnet/bvlc_alexnet.caffemodel";
     private static final String DATABASE_PATH = "database/scores_m.txt";
+    private static final String IDS_PATH = "database/ids.txt";
     private static final Integer FEATURES = 4096;
-    private static final Integer DATABASE_ENTRIES = 1000;
+    private static final Integer DATABASE_ENTRIES = 10000;
     private static final Integer TOP_COUNT = 25;
     private String mCaffeDataPath;
     private String mDatabasePath;
@@ -112,6 +113,7 @@ public class DetectBookActivity extends AppCompatActivity {
         mDatabasePath = getFilesDir().toString() + "/";
         File dir = new File(mDatabasePath + "database/");
         FileUtils.transferDataFile(getAssets(), dir, DATABASE_PATH, mDatabasePath + DATABASE_PATH);
+        FileUtils.transferDataFile(getAssets(), dir, IDS_PATH, mDatabasePath + IDS_PATH);
     }
 
     private void extractFeatures() {
@@ -139,7 +141,9 @@ public class DetectBookActivity extends AppCompatActivity {
 
         Thread thread = new Thread(new Runnable() {
             FileReader fileReader = null;
+            FileReader idFileReader = null;
             BufferedReader bufferedReader = null;
+            BufferedReader idBufferedReader = null;
             int lineCounter = 0;
 
             @Override
@@ -147,6 +151,8 @@ public class DetectBookActivity extends AppCompatActivity {
                 try {
                     fileReader = new FileReader(mDatabasePath + DATABASE_PATH);
                     bufferedReader = new BufferedReader(fileReader);
+                    idFileReader = new FileReader(mDatabasePath + IDS_PATH);
+                    idBufferedReader = new BufferedReader(idFileReader);
 
                     float[] features = new float[FEATURES];
                     if (mDatabaseEntries != null) {
@@ -156,11 +162,12 @@ public class DetectBookActivity extends AppCompatActivity {
                     }
 
                     for (lineCounter = 1; lineCounter <= DATABASE_ENTRIES; ++lineCounter) {
-                        String[] tokens = bufferedReader.readLine().split(",");
+                        String[] tokens = bufferedReader.readLine().split(" ");
+                        String[] idTokens = idBufferedReader.readLine().split(" ");
                         for (int i = 0; i < FEATURES; ++i) {
                             features[i] = Float.parseFloat(tokens[i]);
                         }
-                        mDatabaseEntries.add(new DatabaseEntry(lineCounter, getDistance(features, mFeatures)));
+                        mDatabaseEntries.add(new DatabaseEntry(idTokens[1], getDistance(features, mFeatures)));
                         if (mDatabaseEntries.size() > TOP_COUNT) {
                             mDatabaseEntries.remove(mDatabaseEntries.last());
                         }
@@ -179,6 +186,12 @@ public class DetectBookActivity extends AppCompatActivity {
                         }
                         if (fileReader != null) {
                             fileReader.close();
+                        }
+                        if (idBufferedReader != null) {
+                            idBufferedReader.close();
+                        }
+                        if (idFileReader != null) {
+                            idFileReader.close();
                         }
                     } catch (Exception e) {
                         e.printStackTrace();

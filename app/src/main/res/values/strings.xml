@@ -14,4 +14,5 @@
     <string name="database_searching">Searching in the database</string>
     <string name="remove_background">Remove background</string>
     <string name="select_book">Select</string>
+    <string name="book_cover_description">Book cover</string>
 </resources>

@@ -1,11 +1,16 @@
 package com.scipianus.pocketlibrary;
 
+import android.Manifest;
 import android.app.ActionBar;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -65,6 +70,7 @@ public class ViewPictureActivity extends AppCompatActivity {
     private static final String IMAGE_WIDTH = "width";
     private static final String IMAGE_HEIGHT = "height";
     private static final String POINTS_EXTRA = "corners";
+    private static final int INTERNET_PERMISSION_REQUEST = 1;
     private static final int ADJUST_CROP = 1;
     private static final double GRABCUT_EDGE = 0.05;
     private final String LANGUAGE = "eng";
@@ -121,6 +127,24 @@ public class ViewPictureActivity extends AppCompatActivity {
         mAdjustCropButton = (Button) findViewById(R.id.adjustCropButton);
         mConfirmCropButton = (Button) findViewById(R.id.confirmCropButton);
         mProgressBar = (ProgressBar) findViewById(R.id.extractProgressBar);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case INTERNET_PERMISSION_REQUEST: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    openDetectBookActivity();
+                } else {
+                    Toast.makeText(this, "Required permission not provided", Toast.LENGTH_LONG).show();
+                }
+                break;
+            }
+            default:
+                break;
+        }
     }
 
     public void performNextStep(View view) {
@@ -183,6 +207,17 @@ public class ViewPictureActivity extends AppCompatActivity {
                     displayImage(addContourToImage(mImage, mContour));
                 }
             }
+        }
+    }
+
+    public void tryOpenDetectBookActivity() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.INTERNET},
+                    INTERNET_PERMISSION_REQUEST);
+        } else {
+            openDetectBookActivity();
         }
     }
 
@@ -314,7 +349,7 @@ public class ViewPictureActivity extends AppCompatActivity {
         }
 
         MatOfPoint boundingBoxContour = getBoundingBoxContour(edges);
-        if (contourArea(bestContour) / contourArea(boundingBoxContour) < 0.5) {
+        if (contourArea(bestContour) / contourArea(boundingBoxContour) < 0.8) {
             return boundingBoxContour;
         }
         return bestContour;
@@ -570,6 +605,5 @@ public class ViewPictureActivity extends AppCompatActivity {
             }
         });
         thread.start();
-
     }
 }
