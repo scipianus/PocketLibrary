@@ -39,7 +39,7 @@ public class DetectBookActivity extends AppCompatActivity {
     private static final String DATABASE_PATH = "database/scores_m.txt";
     private static final String IDS_PATH = "database/ids.txt";
     private static final Integer FEATURES = 4096;
-    private static final Integer DATABASE_ENTRIES = 10000;
+    private static final Integer DATABASE_ENTRIES = 100;
     private static final Integer TOP_COUNT = 25;
     private String mCaffeDataPath;
     private String mDatabasePath;
