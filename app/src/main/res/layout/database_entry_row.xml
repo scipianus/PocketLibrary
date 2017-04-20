@@ -7,18 +7,26 @@
     <TextView
         android:id="@+id/entryIdTextView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
         android:text=""
-        android:textSize="30sp"
+        android:textSize="24sp"
         android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/bookCoverImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/book_cover_description" />
 
     <TextView
         android:id="@+id/entryScoreTextView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginStart="10dp"
+        android:gravity="center_vertical"
         android:text=""
-        android:textSize="30sp" />
+        android:textSize="24sp" />
 
     <Space
         android:layout_width="0dp"
@@ -29,7 +37,7 @@
         android:id="@+id/selectEntryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
+        android:layout_gravity="center_vertical"
         android:text="@string/select_book" />
 
 
