@@ -15,4 +15,12 @@
     <string name="remove_background">Remove background</string>
     <string name="select_book">Select</string>
     <string name="book_cover_description">Book cover</string>
+    <string name="n_a">n/a</string>
+    <string name="isbn_n_a">ISBN: n/a</string>
+    <string name="publish_date_n_a">Publish date: n/a</string>
+    <string name="pages_n_a">Pages: n/a</string>
+    <string name="authors_n_a">Authors: n/a</string>
+    <string name="title_n_a">Title: n/a</string>
+    <string name="url_n_a">URL: n/a</string>
+    <string name="publisher_n_a">Publisher: n/a</string>
 </resources>
