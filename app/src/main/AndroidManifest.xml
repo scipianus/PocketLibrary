@@ -38,10 +38,20 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".IntroActivity" />
         </activity>
-        <activity android:name=".BookInfoActivity">
+        <activity android:name=".DetectBookByCoverActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".DetectBookActivity" />
+        </activity>
+        <activity android:name=".DetectBookByTextActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".DetectBookActivity" />
+        </activity>
+        <activity android:name=".BookInfoActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".DetectBookByCoverActivity" />
         </activity>
 
         <provider

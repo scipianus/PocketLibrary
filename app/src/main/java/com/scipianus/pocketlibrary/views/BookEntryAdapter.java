@@ -1,7 +1,6 @@
 package com.scipianus.pocketlibrary.views;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,8 +15,8 @@ import android.widget.TextView;
 
 import com.scipianus.pocketlibrary.BookInfoActivity;
 import com.scipianus.pocketlibrary.R;
-import com.scipianus.pocketlibrary.utils.DatabaseEntry;
-import com.scipianus.pocketlibrary.utils.HTTPUtils;
+import com.scipianus.pocketlibrary.models.BookEntry;
+import com.scipianus.pocketlibrary.models.DatabaseBookEntry;
 
 import java.util.List;
 
@@ -25,22 +24,21 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 /**
- * Created by scipianus on 10-Apr-17.
+ * Created by scipianus on 30-Apr-17.
  */
 
 @AllArgsConstructor(suppressConstructorProperties = true)
 @NoArgsConstructor
-public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdapter.MyViewHolder> {
+public class BookEntryAdapter extends RecyclerView.Adapter<BookEntryAdapter.MyViewHolder> {
 
-    private static final String COVER_API_PATH = "http://covers.openlibrary.org/b/olid/";
-    private static final String ID_EXTRA = "id";
-    private List<DatabaseEntry> databaseEntries;
+    private static final String BOOK_EXTRA = "book";
+    private List<BookEntry> bookEntries;
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView entryIdTextView;
         public ProgressBar progressBar;
         public ImageView bookCoverImageView;
-        public TextView entryScoreTextView;
+        public TextView entryTitleTextView;
         public Button selectEntryButton;
 
         public MyViewHolder(View view) {
@@ -48,7 +46,7 @@ public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdap
             entryIdTextView = (TextView) view.findViewById(R.id.entryIdTextView);
             progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
             bookCoverImageView = (ImageView) view.findViewById(R.id.bookCoverImageView);
-            entryScoreTextView = (TextView) view.findViewById(R.id.entryScoreTextView);
+            entryTitleTextView = (TextView) view.findViewById(R.id.entryTitleTextView);
             selectEntryButton = (Button) view.findViewById(R.id.selectEntryButton);
         }
     }
@@ -56,42 +54,46 @@ public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdap
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.database_entry_row, parent, false);
+                .inflate(R.layout.book_entry_row, parent, false);
 
         return new MyViewHolder(itemView);
     }
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        final DatabaseEntry databaseEntry = databaseEntries.get(position);
+        final BookEntry bookEntry = bookEntries.get(position);
         holder.entryIdTextView.setText(String.format("%d.", position + 1));
-        holder.entryScoreTextView.setText(String.format("%.2f", databaseEntry.getScore()));
         holder.selectEntryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), BookInfoActivity.class);
                 Bundle bundle = new Bundle();
-                bundle.putString(ID_EXTRA, databaseEntry.getId());
+                bundle.putSerializable(BOOK_EXTRA, bookEntry);
                 intent.putExtras(bundle);
                 v.getContext().startActivity(intent);
             }
         });
 
-        if (databaseEntry.getCoverImage() != null) {
+        if (bookEntry.getCoverImage() != null) {
             holder.progressBar.setVisibility(View.GONE);
-            holder.bookCoverImageView.setImageBitmap(databaseEntry.getCoverImage());
+            holder.entryTitleTextView.setText(bookEntry.getTitle());
+            holder.bookCoverImageView.setImageBitmap(bookEntry.getCoverImage());
         } else {
+            holder.selectEntryButton.setEnabled(false);
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    String imageUrl = String.format("%s%s-M.jpg", COVER_API_PATH, databaseEntry.getId());
-                    final Bitmap bookCover = HTTPUtils.getImage(imageUrl);
+                    if (bookEntry instanceof DatabaseBookEntry) {
+                        ((DatabaseBookEntry) bookEntry).fetchJSONData();
+                    }
+                    bookEntry.fetchCoverImage();
 
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         public void run() {
-                            databaseEntry.setCoverImage(bookCover);
                             holder.progressBar.setVisibility(View.GONE);
-                            holder.bookCoverImageView.setImageBitmap(bookCover);
+                            holder.entryTitleTextView.setText(bookEntry.getTitle());
+                            holder.bookCoverImageView.setImageBitmap(bookEntry.getCoverImage());
+                            holder.selectEntryButton.setEnabled(true);
                         }
                     });
                 }
@@ -102,6 +104,6 @@ public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdap
 
     @Override
     public int getItemCount() {
-        return databaseEntries.size();
+        return bookEntries.size();
     }
 }

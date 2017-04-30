@@ -74,12 +74,9 @@ public class ViewPictureActivity extends AppCompatActivity {
     private static final int ADJUST_CROP = 1;
     private static final double GRABCUT_EDGE = 0.05;
     private static final double RECTANGLE_AREA_RATIO = 0.8;
-    private final String LANGUAGE = "eng";
     private final double EPS = 0.0000000001;
     private final double HEIGHT = 750;
     private double mRatio, mAdjustRatio;
-    private TessBaseAPI mTessBaseAPI;
-    private String mTessDataPath;
     private String mCurrentPhotoPath;
     private String mCroppedPhotoPath;
     private Bitmap mImageBitmap;
@@ -450,35 +447,6 @@ public class ViewPictureActivity extends AppCompatActivity {
         thread.start();
 
 
-    }
-
-    private void initTesseract() {
-        mTessDataPath = getFilesDir() + "/tesseract";
-        File dir = new File(mTessDataPath + "/tessdata/");
-        FileUtils.transferDataFile(getAssets(), dir, mTessDataPath + "/tessdata/eng.traineddata", "tessdata/eng.traineddata");
-        mTessBaseAPI = new TessBaseAPI();
-        mTessBaseAPI.init(mTessDataPath, LANGUAGE);
-    }
-
-    public void detectText(final Mat image) {
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Bitmap bmp = Bitmap.createBitmap(image.width(), image.height(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(image, bmp);
-                mTessBaseAPI.setImage(bmp);
-                final String OCRresult = mTessBaseAPI.getUTF8Text();
-
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        //TextView textView = (TextView) findViewById(R.id.OCRTextView);
-                        //if (textView != null)
-                        //    textView.setText(OCRresult);
-                    }
-                });
-            }
-        });
-        thread.start();
     }
 
     private List<Point> sortRectCorners(final List<Point> corners) {

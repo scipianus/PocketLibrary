@@ -12,6 +12,8 @@
     <string name="image_preview">Image preview</string>
     <string name="extracting_features">Extracting features</string>
     <string name="database_searching">Searching in the database</string>
+    <string name="google_searching">Querying Google Books API</string>
+    <string name="running_ocr">Running OCR</string>
     <string name="remove_background">Remove background</string>
     <string name="select_book">Select</string>
     <string name="book_cover_description">Book cover</string>
@@ -23,4 +25,6 @@
     <string name="title_n_a">Title: n/a</string>
     <string name="url_n_a">URL: n/a</string>
     <string name="publisher_n_a">Publisher: n/a</string>
+    <string name="detect_by_cover_image">Detect by cover image</string>
+    <string name="detect_by_cover_text">Detect by cover text</string>
 </resources>

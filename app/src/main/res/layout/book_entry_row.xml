@@ -21,23 +21,23 @@
 
     <ImageView
         android:id="@+id/bookCoverImageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/book_cover_description" />
+        android:layout_width="75dp"
+        android:layout_height="100dp"
+        android:contentDescription="@string/book_cover_description"
+        android:scaleType="fitCenter" />
 
     <TextView
-        android:id="@+id/entryScoreTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginStart="10dp"
-        android:gravity="center_vertical"
-        android:text=""
-        android:textSize="24sp" />
-
-    <Space
+        android:id="@+id/entryTitleTextView"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="2"
+        android:text=""
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/selectEntryButton"
@@ -45,6 +45,4 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:text="@string/select_book" />
-
-
 </LinearLayout>
