@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.scipianus.pocketlibrary.BookInfoActivity;
@@ -37,6 +38,7 @@ public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdap
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView entryIdTextView;
+        public ProgressBar progressBar;
         public ImageView bookCoverImageView;
         public TextView entryScoreTextView;
         public Button selectEntryButton;
@@ -44,6 +46,7 @@ public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdap
         public MyViewHolder(View view) {
             super(view);
             entryIdTextView = (TextView) view.findViewById(R.id.entryIdTextView);
+            progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
             bookCoverImageView = (ImageView) view.findViewById(R.id.bookCoverImageView);
             entryScoreTextView = (TextView) view.findViewById(R.id.entryScoreTextView);
             selectEntryButton = (Button) view.findViewById(R.id.selectEntryButton);
@@ -75,6 +78,7 @@ public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdap
         });
 
         if (databaseEntry.getCoverImage() != null) {
+            holder.progressBar.setVisibility(View.GONE);
             holder.bookCoverImageView.setImageBitmap(databaseEntry.getCoverImage());
         } else {
             Thread thread = new Thread(new Runnable() {
@@ -86,6 +90,7 @@ public class DatabaseEntryAdapter extends RecyclerView.Adapter<DatabaseEntryAdap
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         public void run() {
                             databaseEntry.setCoverImage(bookCover);
+                            holder.progressBar.setVisibility(View.GONE);
                             holder.bookCoverImageView.setImageBitmap(bookCover);
                         }
                     });
