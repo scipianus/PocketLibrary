@@ -1,21 +1,21 @@
 <resources>
     <string name="app_name">Pocket Library</string>
-    <string name="take_picture_button_title">Take picture</string>
-    <string name="open_gallery_button_title">Open from gallery</string>
+    <string name="take_picture_button_title">{fa_camera} Take picture</string>
+    <string name="open_gallery_button_title">{fa_picture_o} Open from gallery</string>
     <string name="find_contour">Find contour</string>
     <string name="detect_rectangle">Detect rectangle</string>
     <string name="adjust_perspective">Adjust perspective</string>
     <string name="run_ocr">Run OCR</string>
     <string name="detect_book">Detect book</string>
-    <string name="adjust_crop_button">Adjust</string>
-    <string name="confirm_crop_button">Confirm</string>
+    <string name="adjust_crop_button">{fa_crop} Adjust</string>
+    <string name="confirm_crop_button">{fa_check} Confirm</string>
     <string name="image_preview">Image preview</string>
     <string name="extracting_features">Extracting features</string>
     <string name="database_searching">Searching in the database</string>
     <string name="google_searching">Querying Google Books API</string>
     <string name="running_ocr">Running OCR</string>
     <string name="remove_background">Remove background</string>
-    <string name="select_book">Select</string>
+    <string name="select_book">{fa_check} Select</string>
     <string name="book_cover_description">Book cover</string>
     <string name="n_a">n/a</string>
     <string name="isbn_n_a">ISBN: n/a</string>
@@ -25,6 +25,8 @@
     <string name="title_n_a">Title: n/a</string>
     <string name="url_n_a">URL: n/a</string>
     <string name="publisher_n_a">Publisher: n/a</string>
-    <string name="detect_by_cover_image">Detect by cover image</string>
-    <string name="detect_by_cover_text">Detect by cover text</string>
+    <string name="detect_by_cover_image">{fa_file_image_o} Detect by cover image</string>
+    <string name="detect_by_cover_text">{fa_file_text_o} Detect by cover text</string>
+    <string name="about">{fa_info_circle} About</string>
+    <string name="copyright">Copyright © 2017 by Ciprian Olariu</string>
 </resources>

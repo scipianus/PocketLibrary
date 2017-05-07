@@ -8,11 +8,11 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.beardedhen.androidbootstrap.BootstrapButton;
 import com.scipianus.pocketlibrary.BookInfoActivity;
 import com.scipianus.pocketlibrary.R;
 import com.scipianus.pocketlibrary.models.BookEntry;
@@ -39,7 +39,7 @@ public class BookEntryAdapter extends RecyclerView.Adapter<BookEntryAdapter.MyVi
         public ProgressBar progressBar;
         public ImageView bookCoverImageView;
         public TextView entryTitleTextView;
-        public Button selectEntryButton;
+        public BootstrapButton selectEntryButton;
 
         public MyViewHolder(View view) {
             super(view);
@@ -47,7 +47,7 @@ public class BookEntryAdapter extends RecyclerView.Adapter<BookEntryAdapter.MyVi
             progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
             bookCoverImageView = (ImageView) view.findViewById(R.id.bookCoverImageView);
             entryTitleTextView = (TextView) view.findViewById(R.id.entryTitleTextView);
-            selectEntryButton = (Button) view.findViewById(R.id.selectEntryButton);
+            selectEntryButton = (BootstrapButton) view.findViewById(R.id.selectEntryButton);
         }
     }
 

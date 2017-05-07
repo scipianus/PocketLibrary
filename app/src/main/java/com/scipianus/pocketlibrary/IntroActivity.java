@@ -16,6 +16,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import com.beardedhen.androidbootstrap.TypefaceProvider;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -34,6 +36,7 @@ public class IntroActivity extends AppCompatActivity {
         System.loadLibrary("opencv_java3");
         System.loadLibrary("caffe");
         System.loadLibrary("caffe_jni");
+        TypefaceProvider.registerDefaultIconSets();
     }
 
     @Override
@@ -71,6 +74,11 @@ public class IntroActivity extends AppCompatActivity {
         } else {
             takePicture();
         }
+    }
+
+    public void openAboutActivity(View view) {
+        Intent intent = new Intent(this, AboutActivity.class);
+        startActivity(intent);
     }
 
     protected void openGallery() {

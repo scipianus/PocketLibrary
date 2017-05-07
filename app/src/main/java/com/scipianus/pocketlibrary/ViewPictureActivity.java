@@ -13,14 +13,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.googlecode.tesseract.android.TessBaseAPI;
+import com.beardedhen.androidbootstrap.BootstrapButton;
+import com.beardedhen.androidbootstrap.BootstrapText;
 import com.scipianus.pocketlibrary.utils.Contour;
-import com.scipianus.pocketlibrary.utils.FileUtils;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -88,9 +87,9 @@ public class ViewPictureActivity extends AppCompatActivity {
     private MatOfPoint mContour;
     private Size mOriginalSize;
     private int mCurrentStep;
-    private Button mNextStepButton;
-    private Button mAdjustCropButton;
-    private Button mConfirmCropButton;
+    private BootstrapButton mNextStepButton;
+    private BootstrapButton mAdjustCropButton;
+    private BootstrapButton mConfirmCropButton;
     private ProgressBar mProgressBar;
 
     @Override
@@ -119,11 +118,11 @@ public class ViewPictureActivity extends AppCompatActivity {
         readImage(mCurrentPhotoPath);
         displayImage(mImage);
 
-        mNextStepButton = (Button) findViewById(R.id.nextStepButton);
+        mNextStepButton = (BootstrapButton) findViewById(R.id.nextStepButton);
         mNextStepButton.setText(R.string.remove_background);
 
-        mAdjustCropButton = (Button) findViewById(R.id.adjustCropButton);
-        mConfirmCropButton = (Button) findViewById(R.id.confirmCropButton);
+        mAdjustCropButton = (BootstrapButton) findViewById(R.id.adjustCropButton);
+        mConfirmCropButton = (BootstrapButton) findViewById(R.id.confirmCropButton);
         mProgressBar = (ProgressBar) findViewById(R.id.extractProgressBar);
     }
 
@@ -164,7 +163,11 @@ public class ViewPictureActivity extends AppCompatActivity {
             case 3:
                 transformPerspective(mInitialImage, mContour);
                 mCurrentStep++;
-                mNextStepButton.setText(R.string.detect_book);
+                mNextStepButton.setBootstrapText(new BootstrapText
+                        .Builder(this)
+                        .addFontAwesomeIcon("fa_search")
+                        .addText(" " + getResources().getString(R.string.detect_book))
+                        .build());
                 break;
             case 4:
                 saveCroppedImage(mCroppedImage);

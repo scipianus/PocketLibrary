@@ -16,42 +16,63 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".IntroActivity">
+        <activity
+            android:name=".IntroActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ViewPictureActivity">
+        <activity
+            android:name=".ViewPictureActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".IntroActivity" />
         </activity>
-        <activity android:name=".AdjustPictureCropActivity">
+        <activity
+            android:name=".AdjustPictureCropActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ViewPictureActivity" />
         </activity>
-        <activity android:name=".DetectBookActivity">
+        <activity
+            android:name=".DetectBookActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".IntroActivity" />
         </activity>
-        <activity android:name=".DetectBookByCoverActivity">
+        <activity
+            android:name=".DetectBookByCoverActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".DetectBookActivity" />
         </activity>
-        <activity android:name=".DetectBookByTextActivity">
+        <activity
+            android:name=".DetectBookByTextActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".DetectBookActivity" />
         </activity>
-        <activity android:name=".BookInfoActivity">
+        <activity
+            android:name=".BookInfoActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".DetectBookByCoverActivity" />
+        </activity>
+        <activity
+            android:name=".AboutActivity"
+            android:screenOrientation="portrait">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".IntroActivity" />
         </activity>
 
         <provider

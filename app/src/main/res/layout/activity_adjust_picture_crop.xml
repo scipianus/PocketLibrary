@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_adjust_picture_crop"
     android:layout_width="match_parent"
@@ -10,14 +11,17 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.scipianus.pocketlibrary.ViewPictureActivity">
 
-    <Button
+    <com.beardedhen.androidbootstrap.BootstrapButton
         android:id="@+id/confirmCurrentCropButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:onClick="confirmCrop"
-        android:text="@string/confirm_crop_button" />
+        app:bootstrapBrand="success"
+        app:bootstrapSize="lg"
+        app:bootstrapText="@string/confirm_crop_button"
+        app:roundedCorners="true" />
 
     <com.scipianus.pocketlibrary.views.CroppableImageView
         android:id="@+id/croppableImageView"
