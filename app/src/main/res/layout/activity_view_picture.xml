@@ -11,6 +11,24 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.scipianus.pocketlibrary.ViewPictureActivity">
 
+    <ProgressBar
+        android:id="@+id/extractProgressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/extractProgressBar"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/image_preview" />
+
     <com.beardedhen.androidbootstrap.BootstrapButton
         android:id="@+id/nextStepButton"
         android:layout_width="wrap_content"
@@ -48,21 +66,5 @@
         app:bootstrapSize="lg"
         app:bootstrapText="@string/confirm_crop_button"
         app:roundedCorners="true" />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:contentDescription="@string/image_preview" />
-
-    <ProgressBar
-        android:id="@+id/extractProgressBar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/imageView"
-        android:layout_centerHorizontal="true"
-        android:visibility="invisible" />
 
 </RelativeLayout>

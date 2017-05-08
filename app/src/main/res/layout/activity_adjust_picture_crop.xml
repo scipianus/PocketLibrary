@@ -25,9 +25,11 @@
 
     <com.scipianus.pocketlibrary.views.CroppableImageView
         android:id="@+id/croppableImageView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/confirmCurrentCropButton"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="15dp" />
 
 </RelativeLayout>
