@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.googlecode.tesseract.android.ResultIterator;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.scipianus.pocketlibrary.models.BookEntry;
 import com.scipianus.pocketlibrary.models.GoogleBookEntry;
@@ -103,11 +104,19 @@ public class DetectBookByTextActivity extends AppCompatActivity {
                 Bitmap bmp = Bitmap.createBitmap(image.width(), image.height(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(image, bmp);
                 mTessBaseAPI.setImage(bmp);
-                final String OCRresult = mTessBaseAPI.getUTF8Text();
+                mTessBaseAPI.getUTF8Text();
+                final StringBuilder OCRresult = new StringBuilder();
+                ResultIterator iterator = mTessBaseAPI.getResultIterator();
+                do {
+                    if (iterator.confidence(TessBaseAPI.PageIteratorLevel.RIL_WORD) >= 30) {
+                        OCRresult.append(iterator.getUTF8Text(TessBaseAPI.PageIteratorLevel.RIL_WORD).replaceAll("[^A-Za-z]", ""));
+                        OCRresult.append(" ");
+                    }
+                } while (iterator.next(TessBaseAPI.PageIteratorLevel.RIL_WORD));
 
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        queryGoogleBooksAPI(OCRresult);
+                        queryGoogleBooksAPI(OCRresult.toString());
                     }
                 });
             }
