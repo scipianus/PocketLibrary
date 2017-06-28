@@ -29,4 +29,5 @@
     <string name="detect_by_cover_text">{fa_file_text_o} Detect by cover text</string>
     <string name="about">{fa_info_circle} About</string>
     <string name="copyright">Copyright © 2017 by Ciprian Olariu</string>
+    <string name="aboutDescription">The objective of this app is to give to users the possibility to find out more information about a book they see.\n\nFor that, a user will take a photo of the book, which will be then automatically detected, cropped and identified.\n\nThe app will then retrieve and display useful information about that book..</string>
 </resources>
